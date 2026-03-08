@@ -48,20 +48,6 @@
             border-left: 10px solid var(--primary);
         }
 
-        .reta-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        /* Ocultar botones de admin por defecto */
-        .admin-only { display: none; }
-
-        .btn-add-reta { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-clear-reta { background: #ff5252; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-
         /* --- FILTROS --- */
         .filter-container {
             display: flex;
@@ -86,14 +72,23 @@
         .card-img { height: 150px; background-size: cover; background-position: center; }
         .card-content { padding: 15px; }
 
-        /* --- COMENTARIOS --- */
-        .comments-section { background: #f9f9f9; padding: 15px; border-top: 1px solid #eee; max-height: 200px; overflow-y: auto; }
-        .comment { font-size: 0.85rem; background: white; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ddd; position: relative; }
+        /* --- SECCIÓN DE AVISOS (ESTÁTICA) --- */
+        .comments-section { background: #f9f9f9; padding: 15px; border-top: 1px solid #eee; }
+        .comment { font-size: 0.85rem; background: white; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ddd; color: #555; }
 
-        .btn-delete { position: absolute; right: 5px; top: 5px; background: none; border: none; color: #ff5252; cursor: pointer; font-size: 0.7rem; }
-
-        .comment-input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 5px; box-sizing: border-box; }
-        .btn-post { background: var(--dark); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; width: 100%; }
+        .btn-maps { 
+            background: var(--google-blue); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            width: 100%; 
+            display: block; 
+            text-align: center; 
+            text-decoration: none; 
+            font-weight: bold;
+        }
 
         footer { text-align: center; padding: 40px; background: var(--dark); color: white; margin-top: 50px; }
     </style>
@@ -106,13 +101,8 @@
     </header>
 
     <div class="retas-banner">
-        <h2>🏀 SECCIÓN DE RETAS</h2>
-        <p id="reta-info">No hay retas activas reportadas.</p>
-        
-         <div class="reta-controls">
-            <button class="btn-add-reta admin-only" onclick="addReta()">+ AGREGAR RETA</button>
-            <button class="btn-clear-reta admin-only" onclick="clearReta()">✖ BORRAR RETA</button>
-        </div>
+        <h2>🏀 RETA ACTIVA</h2>
+        <p id="reta-info" style="font-size: 1.2rem;">🔥 No hay retas activas reportadas por ahora.</p>
     </div>
 
     <div class="filter-container">
@@ -132,81 +122,97 @@
     </footer>
 
     <script>
-        const PASS = "Rodillas123";
-
-        // VERIFICAR SI ERES EL ADMIN (JFSTUDIOMX)
-        function checkAdmin() {
-            if (localStorage.getItem('jf_admin_key') === 'true') {
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
-                return true;
-            }
-            return false;
-        }
-
+        // LISTA DE CANCHAS Y AVISOS
+        // Para cambiar los avisos, edita el texto dentro de "avisos"
         const canchas = [
-            { id: 1, nombre: "Plaza Esperanza", sector: "ESPERANZA", coords: "27.581260,-109.929499", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?auto=format&fit=crop&w=600" },
-            { id: 2, nombre: "Canchas Nueva Esperanza", sector: "ESPERANZA", coords: "27.581260,-109.929499", img: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=600" },
-            { id: 3, nombre: "Cancha Plaza del Músico", sector: "ESPERANZA", coords: "27.578645,-109.938820", img: "https://images.unsplash.com/photo-1519861531473-9200362f46b3?auto=format&fit=crop&w=600" },
-            { id: 4, nombre: "Canchas Grope", sector: "ALAMEDA", coords: "27.576474,-109.946508", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600" },
-            { id: 5, nombre: "Canchas Poncho", sector: "ALAMEDA", coords: "27.571568,-109.946257", img: "https://images.unsplash.com/photo-1466193341027-56e68017ee2d?auto=format&fit=crop&w=600" },
-            { id: 6, nombre: "Cancha Lunin", sector: "ALAMEDA", coords: "27.572059,-109.944338", img: "https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=600" },
-            { id: 7, nombre: "LA BOMBERA", sector: "VILLA BONITA", coords: "27.567762,-109.941760", img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600" },
-            { id: 8, nombre: "Canchas Pergon", sector: "VILLA BONITA", coords: "27.561950,-109.944967", img: "https://images.unsplash.com/photo-1529900948638-02f04dc58297?auto=format&fit=crop&w=600" },
-            { id: 9, nombre: "Canchas La Paz", sector: "VILLA BONITA", coords: "27.561238,-109.940226", img: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&w=600" }
+            { 
+                id: 1, 
+                nombre: "Plaza Esperanza", 
+                sector: "ESPERANZA", 
+                coords: "27.581260,-109.929499", 
+                img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?auto=format&fit=crop&w=600",
+                avisos: ["Cancha abierta", "Luz disponible hasta las 10 PM"] 
+            },
+            { 
+                id: 2, 
+                nombre: "Canchas Nueva Esperanza", 
+                sector: "ESPERANZA", 
+                coords: "27.581260,-109.929499", 
+                img: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=600",
+                avisos: ["Traer balón propio"] 
+            },
+            { 
+                id: 3, 
+                nombre: "Cancha Plaza del Músico", 
+                sector: "ESPERANZA", 
+                coords: "27.578645,-109.938820", 
+                img: "https://images.unsplash.com/photo-1519861531473-9200362f46b3?auto=format&fit=crop&w=600",
+                avisos: [] 
+            },
+            { 
+                id: 4, 
+                nombre: "Canchas Grope", 
+                sector: "ALAMEDA", 
+                coords: "27.576474,-109.946508", 
+                img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600",
+                avisos: ["Suele llenarse los viernes"] 
+            },
+            { 
+                id: 5, 
+                nombre: "Canchas Poncho", 
+                sector: "ALAMEDA", 
+                coords: "27.571568,-109.946257", 
+                img: "https://images.unsplash.com/photo-1466193341027-56e68017ee2d?auto=format&fit=crop&w=600",
+                avisos: [] 
+            },
+            { 
+                id: 6, 
+                nombre: "Cancha Lunin", 
+                sector: "ALAMEDA", 
+                coords: "27.572059,-109.944338", 
+                img: "https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=600",
+                avisos: [] 
+            },
+            { 
+                id: 7, 
+                nombre: "LA BOMBERA", 
+                sector: "VILLA BONITA", 
+                coords: "27.567762,-109.941760", 
+                img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600",
+                avisos: ["¡Cuidado con el calor!"] 
+            },
+            { 
+                id: 8, 
+                nombre: "Canchas Pergon", 
+                sector: "VILLA BONITA", 
+                coords: "27.561950,-109.944967", 
+                img: "https://images.unsplash.com/photo-1529900948638-02f04dc58297?auto=format&fit=crop&w=600",
+                avisos: [] 
+            },
+            { 
+                id: 9, 
+                nombre: "Canchas La Paz", 
+                sector: "VILLA BONITA", 
+                coords: "27.561238,-109.940226", 
+                img: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&w=600",
+                avisos: ["Zona tranquila para jugar"] 
+            }
         ];
-
-        function addReta() {
-            if (!checkAdmin()) return;
-            const text = prompt("¿Qué reta se armará?");
-            if (text) {
-                localStorage.setItem('reta_activa', text);
-                document.getElementById('reta-info').innerText = "🔥 " + text;
-            }
-        }
-
-        function clearReta() {
-            if (!checkAdmin()) return;
-            localStorage.removeItem('reta_activa');
-            document.getElementById('reta-info').innerText = "No hay retas activas reportadas.";
-        }
-
-        function postComment(canchaId) {
-            const input = document.getElementById(`input-${canchaId}`);
-            if (!input.value) return;
-            let comments = JSON.parse(localStorage.getItem(`comments-${canchaId}`)) || [];
-            comments.push({ id: Date.now(), text: input.value });
-            localStorage.setItem(`comments-${canchaId}`, JSON.stringify(comments));
-            input.value = '';
-            render();
-        }
-
-        function deleteComment(canchaId, commentId) {
-            if (!checkAdmin()) {
-                alert("Solo JFSTUDIOMX puede borrar comentarios.");
-                return;
-            }
-            let comments = JSON.parse(localStorage.getItem(`comments-${canchaId}`));
-            comments = comments.filter(c => c.id !== commentId);
-            localStorage.setItem(`comments-${canchaId}`, JSON.stringify(comments));
-            render();
-        }
 
         function render(filter = 'all') {
             const grid = document.getElementById('courts-grid');
             grid.innerHTML = '';
             const filtered = filter === 'all' ? canchas : canchas.filter(c => c.sector === filter);
-            const isAdmin = localStorage.getItem('jf_admin_key') === 'true';
 
             filtered.forEach(c => {
-                let commsHTML = '';
-                const storedComms = JSON.parse(localStorage.getItem(`comments-${c.id}`)) || [];
-                storedComms.forEach(com => {
-                    commsHTML += `
-                        <div class="comment">
-                            ${com.text}
-                            ${isAdmin ? `<button class="btn-delete" onclick="deleteComment(${c.id}, ${com.id})">✖</button>` : ''}
-                        </div>`;
-                });
+                let avisosHTML = '';
+                if (c.avisos.length > 0) {
+                    c.avisos.forEach(aviso => {
+                        avisosHTML += `<div class="comment">${aviso}</div>`;
+                    });
+                } else {
+                    avisosHTML = `<div style="font-size:0.8rem; color:#aaa;">Sin avisos recientes.</div>`;
+                }
 
                 grid.innerHTML += `
                     <div class="card">
@@ -214,18 +220,15 @@
                         <div class="card-content">
                             <div class="zona-tag">📍 ${c.sector}</div>
                             <h3>${c.nombre}</h3>
-                            <a href="https://www.google.com/maps/search/?api=1&query=${c.coords}" target="_blank" class="btn-post" style="text-align:center; text-decoration:none; display:block; margin-bottom:10px; background:#4285F4;">VER MAPA</a>
-                            <input type="text" id="input-${c.id}" class="comment-input" placeholder="Aviso rápido...">
-                            <button class="btn-post" onclick="postComment(${c.id})">PUBLICAR</button>
+                            <a href="https://www.google.com/maps?q=${c.coords}" target="_blank" class="btn-maps">VER EN MAPA</a>
                         </div>
                         <div class="comments-section">
-                            <strong>Avisos:</strong>
-                            ${commsHTML}
+                            <strong>Avisos de JFSTUDIOMX:</strong>
+                            <div style="margin-top:10px;">${avisosHTML}</div>
                         </div>
                     </div>
                 `;
             });
-            checkAdmin();
         }
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -236,10 +239,6 @@
             });
         });
 
-        // Al iniciar, cargar reta y verificar admin
-        if(localStorage.getItem('reta_activa')) {
-            document.getElementById('reta-info').innerText = "🔥 " + localStorage.getItem('reta_activa');
-        }
         render();
     </script>
 </body>
