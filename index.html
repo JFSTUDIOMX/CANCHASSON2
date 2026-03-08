@@ -6,6 +6,8 @@
     <title>Retas Cajeme | JFSTUDIOMX</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         :root {
@@ -48,6 +50,22 @@
             border-left: 10px solid var(--primary);
         }
 
+        /* --- ESTILOS DEL MAPA --- */
+        #map-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 20px;
+            border: 4px solid var(--dark);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
         /* --- FILTROS --- */
         .filter-container {
             display: flex;
@@ -72,7 +90,7 @@
         .card-img { height: 150px; background-size: cover; background-position: center; }
         .card-content { padding: 15px; }
 
-        /* --- SECCIÓN DE AVISOS (ESTÁTICA) --- */
+        /* --- SECCIÓN DE AVISOS --- */
         .comments-section { background: #f9f9f9; padding: 15px; border-top: 1px solid #eee; }
         .comment { font-size: 0.85rem; background: white; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ddd; color: #555; }
 
@@ -105,6 +123,11 @@
         <p id="reta-info" style="font-size: 1.2rem;">🔥 No hay retas activas reportadas por ahora.</p>
     </div>
 
+    <div id="map-container">
+        <h2 style="text-align: center; font-family: 'Black Han Sans';">📍 UBICACIÓN DE CANCHAS</h2>
+        <div id="map"></div>
+    </div>
+
     <div class="filter-container">
         <button class="filter-btn active" data-filter="all">Todas</button>
         <button class="filter-btn" data-filter="ESPERANZA">Esperanza</button>
@@ -121,83 +144,47 @@
         </div>
     </footer>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
-        // LISTA DE CANCHAS Y AVISOS
-        // Para cambiar los avisos, edita el texto dentro de "avisos"
         const canchas = [
-            { 
-                id: 1, 
-                nombre: "Plaza Esperanza", 
-                sector: "ESPERANZA", 
-                coords: "27.581260,-109.929499", 
-                img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?auto=format&fit=crop&w=600",
-                avisos: ["Cancha abierta", "Luz disponible hasta las 10 PM"] 
-            },
-            { 
-                id: 2, 
-                nombre: "Canchas Nueva Esperanza", 
-                sector: "ESPERANZA", 
-                coords: "27.581260,-109.929499", 
-                img: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=600",
-                avisos: ["Traer balón propio"] 
-            },
-            { 
-                id: 3, 
-                nombre: "Cancha Plaza del Músico", 
-                sector: "ESPERANZA", 
-                coords: "27.578645,-109.938820", 
-                img: "https://images.unsplash.com/photo-1519861531473-9200362f46b3?auto=format&fit=crop&w=600",
-                avisos: [] 
-            },
-            { 
-                id: 4, 
-                nombre: "Canchas Grope", 
-                sector: "ALAMEDA", 
-                coords: "27.576474,-109.946508", 
-                img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600",
-                avisos: ["Suele llenarse los viernes"] 
-            },
-            { 
-                id: 5, 
-                nombre: "Canchas Poncho", 
-                sector: "ALAMEDA", 
-                coords: "27.571568,-109.946257", 
-                img: "https://images.unsplash.com/photo-1466193341027-56e68017ee2d?auto=format&fit=crop&w=600",
-                avisos: [] 
-            },
-            { 
-                id: 6, 
-                nombre: "Cancha Lunin", 
-                sector: "ALAMEDA", 
-                coords: "27.572059,-109.944338", 
-                img: "https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=600",
-                avisos: [] 
-            },
-            { 
-                id: 7, 
-                nombre: "LA BOMBERA", 
-                sector: "VILLA BONITA", 
-                coords: "27.567762,-109.941760", 
-                img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600",
-                avisos: ["¡Cuidado con el calor!"] 
-            },
-            { 
-                id: 8, 
-                nombre: "Canchas Pergon", 
-                sector: "VILLA BONITA", 
-                coords: "27.561950,-109.944967", 
-                img: "https://images.unsplash.com/photo-1529900948638-02f04dc58297?auto=format&fit=crop&w=600",
-                avisos: [] 
-            },
-            { 
-                id: 9, 
-                nombre: "Canchas La Paz", 
-                sector: "VILLA BONITA", 
-                coords: "27.561238,-109.940226", 
-                img: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&w=600",
-                avisos: ["Zona tranquila para jugar"] 
-            }
+            { id: 1, nombre: "Plaza Esperanza", sector: "ESPERANZA", coords: "27.581260,-109.929499", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?auto=format&fit=crop&w=600", avisos: ["Cancha abierta", "Luz disponible hasta las 10 PM"] },
+            { id: 2, nombre: "Canchas Nueva Esperanza", sector: "ESPERANZA", coords: "27.581260,-109.929499", img: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=600", avisos: ["Traer balón propio"] },
+            { id: 3, nombre: "Cancha Plaza del Músico", sector: "ESPERANZA", coords: "27.578645,-109.938820", img: "https://images.unsplash.com/photo-1519861531473-9200362f46b3?auto=format&fit=crop&w=600", avisos: [] },
+            { id: 4, nombre: "Canchas Grope", sector: "ALAMEDA", coords: "27.576474,-109.946508", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600", avisos: ["Suele llenarse los viernes"] },
+            { id: 5, nombre: "Canchas Poncho", sector: "ALAMEDA", coords: "27.571568,-109.946257", img: "https://images.unsplash.com/photo-1466193341027-56e68017ee2d?auto=format&fit=crop&w=600", avisos: [] },
+            { id: 6, nombre: "Cancha Lunin", sector: "ALAMEDA", coords: "27.572059,-109.944338", img: "https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=600", avisos: [] },
+            { id: 7, nombre: "LA BOMBERA", sector: "VILLA BONITA", coords: "27.567762,-109.941760", img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600", avisos: ["¡Cuidado con el calor!"] },
+            { id: 8, nombre: "Canchas Pergon", sector: "VILLA BONITA", coords: "27.561950,-109.944967", img: "https://images.unsplash.com/photo-1529900948638-02f04dc58297?auto=format&fit=crop&w=600", avisos: [] },
+            { id: 9, nombre: "Canchas La Paz", sector: "VILLA BONITA", coords: "27.561238,-109.940226", img: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&w=600", avisos: ["Zona tranquila para jugar"] }
         ];
+
+        // CONFIGURACIÓN DEL MAPA
+        let map;
+        function initMap() {
+            // Centrar en Obregón/Esperanza
+            map = L.map('map').setView([27.575, -109.940], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            const redIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            canchas.forEach(c => {
+                const latlng = c.coords.split(',').map(Number);
+                L.marker(latlng, {icon: redIcon})
+                    .addTo(map)
+                    .bindPopup(`<b>${c.nombre}</b><br>${c.sector}`);
+            });
+        }
 
         function render(filter = 'all') {
             const grid = document.getElementById('courts-grid');
@@ -239,7 +226,11 @@
             });
         });
 
-        render();
+        // Ejecutar funciones al cargar
+        window.onload = function() {
+            render();
+            initMap();
+        };
     </script>
 </body>
 </html>
