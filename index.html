@@ -113,16 +113,17 @@
 
         footer { text-align: center; padding: 40px; background: var(--dark); color: white; margin-top: 50px; }
 
-        /* --- ESTILOS DEL LOGO JFSTUDIOMX (NUEVO) --- */
+        /* --- ESTILOS DEL LOGO JFSTUDIOMX --- */
         #jf-logo-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 2000; /* Super alto para que siempre se vea */
+            z-index: 2000;
             width: 80px;
             height: 80px;
-            opacity: 0.7; /* Ligeramente transparente */
+            opacity: 0.7;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         #jf-logo-container:hover {
@@ -134,11 +135,10 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            border-radius: 50%; /* Como tu logo es circular */
+            border-radius: 50%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        /* Efecto de pulso si hay reta activa */
         .pulso-reta {
             animation: pulso 2s infinite;
         }
@@ -148,6 +148,51 @@
             70% { box-shadow: 0 0 0 15px rgba(251, 140, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(251, 140, 0, 0); }
         }
+
+        /* --- ESTILOS DEL MODAL DE REDES --- */
+        .modal-redes {
+            display: none; 
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid var(--primary);
+            max-width: 300px;
+            width: 80%;
+            position: relative;
+        }
+
+        .modal-content h2 { font-family: 'Black Han Sans', sans-serif; color: var(--primary); margin-top: 0; }
+
+        .red-link {
+            display: block;
+            color: white;
+            text-decoration: none;
+            margin: 15px 0;
+            font-size: 1.1rem;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+
+        .red-link:hover { background: var(--primary); }
+
+        .close-modal { margin-top: 15px; cursor: pointer; font-weight: bold; color: #aaa; }
 
     </style>
 </head>
@@ -188,8 +233,25 @@
         </div>
     </footer>
 
-    <div id="jf-logo-container" class="pulso-reta">
+    <div id="jf-logo-container" class="pulso-reta" onclick="abrirRedes()">
         <img id="jf-logo-img" src="3.png" alt="Logo JFSTUDIOMX">
+    </div>
+
+    <div id="modalRedes" class="modal-redes" onclick="cerrarRedes()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2>JFSTUDIOMX</h2>
+            <p>¡Reporta tu reta o contáctanos!</p>
+            
+            <a href="https://instagram.com/juan_fa9" target="_blank" class="red-link">
+                📸 Instagram: @juan_fa9
+            </a>
+            
+            <a href="mailto:jfstudiomx@gmail.com" class="red-link">
+                📧 jfstudiomx@gmail.com
+            </a>
+
+            <div class="close-modal">CERRAR</div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -208,7 +270,6 @@
             { id: 9, nombre: "Canchas La Paz", sector: "VILLA BONITA", coords: "27.561238,-109.940226", img: "https://images.unsplash.com/photo-1542652694-40abf526446e?auto=format&fit=crop&w=600", avisos: ["Zona tranquila para jugar"] }
         ];
 
-        // CONFIGURACIÓN DEL MAPA (Leaflet)
         let map;
         function initMap() {
             map = L.map('map').setView([27.575, -109.940], 13);
@@ -228,7 +289,6 @@
             });
         }
 
-        // RENDERIZADO DE TARJETAS
         function render(filter = 'all') {
             const grid = document.getElementById('courts-grid');
             grid.innerHTML = '';
@@ -246,7 +306,7 @@
                         <div class="card-content">
                             <div class="zona-tag">📍 ${c.sector}</div>
                             <h3>${c.nombre}</h3>
-                            <a href="https://www.google.com/maps?q=${c.coords}" target="_blank" class="btn-maps">VER EN MAPA</a>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${c.coords}" target="_blank" class="btn-maps">VER EN MAPA</a>
                         </div>
                         <div class="comments-section">
                             <strong>Avisos de JFSTUDIOMX:</strong>
@@ -257,7 +317,9 @@
             });
         }
 
-        // CONTROL DE FILTROS
+        function abrirRedes() { document.getElementById('modalRedes').style.display = 'flex'; }
+        function cerrarRedes() { document.getElementById('modalRedes').style.display = 'none'; }
+
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelector('.filter-btn.active').classList.remove('active');
@@ -266,7 +328,6 @@
             });
         });
 
-        // INICIAR AL CARGAR LA PÁGINA
         window.onload = function() {
             render();
             initMap();
